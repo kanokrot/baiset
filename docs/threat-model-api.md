@@ -9,8 +9,9 @@ security model.
 
 ## Scope and assumptions
 
-- The intended deployment is self-hosted and single-tenant. This is an
-  assumption for planning, not an implemented tenant boundary.
+- Each self-hosted installation will serve one business; multi-tenant use is
+  out of scope. This is a decided design target, not an implemented tenant
+  boundary.
 - The current core defines `issuer`, `approver`, `auditor`, and `admin` roles
   and checks roles for domain transitions. It receives `Actor` data from its
   caller and does not authenticate that actor.
@@ -36,24 +37,32 @@ security model.
 
 ## STRIDE analysis
 
-| Threat                 | Asset                                                      | Planned mitigation                                                                                                                                                                                                                                                   | Status  |
-| ---------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| Spoofing               | User identity and assigned roles                           | Authenticate users at the API; derive `Actor` only from a verified server-side session or token, never request fields. Bind sessions to an identity provider and define expiry and revocation.                                                                       | Planned |
-| Tampering              | Document requests, issued content, and audit history       | Validate API inputs and call the existing domain transitions. Keep audit HMAC keys out of requests and databases. Plan independently published anchors for audit history and issued document hashes; a database superuser can otherwise rewrite records and anchors. | Planned |
-| Repudiation            | Issuance, approval, and void actions                       | Bind audit actor IDs to authenticated identities and retain the existing action/time/document audit fields. Decide how trusted time and identity evidence are established and retained.                                                                              | Open    |
-| Information disclosure | Seller/buyer data, tax IDs, audit history, and credentials | Plan endpoint-level authorization for each role, redacted errors and logs, and controls for transport, backups, retention, and secrets. Read access for `auditor` and other roles is not defined by an API because no API exists.                                    | Open    |
-| Denial of service      | API availability, repository, and document issuance        | Enforce request/body limits, rate limits, timeouts, concurrency bounds, monitoring, and recovery procedures at deployment. Core schemas already bound several fields and arrays, but API-level limits and operational controls are not implemented.                  | Open    |
-| Elevation of privilege | Cross-role actions and tenant data                         | Enforce authorization on every API operation and construct roles from trusted identity data. The core checks roles for transitions, but it does not authenticate actors or provide tenant isolation.                                                                 | Planned |
+| Threat                 | Asset                                                                  | Planned mitigation                                                                                                                                                                                                                                                                                                                   | Status  |
+| ---------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| Spoofing               | User identity and assigned roles                                       | Planned: hash passwords with Argon2id, require TOTP for approver/admin, use revocable server-side sessions, and derive `Actor` from the verified session, never request fields. Bootstrap the first admin through the install-time CLI, not public sign-up.                                                                          | Planned |
+| Tampering              | Document requests, issued content, role assignments, and audit history | Planned: validate API inputs and call existing domain transitions. Restrict role changes to admins and record them in the audit chain. Authentication events and role-change audit records require API and audit integration that does not exist yet. External anchors remain planned.                                               | Planned |
+| Repudiation            | Login, failed login, role change, issuance, approval, and void actions | Planned: record login, failed-login, and role-change events in the audit chain and bind actors to verified identities. The current chain records document actions only; trusted time and identity evidence remain open.                                                                                                              | Open    |
+| Information disclosure | Seller/buyer data, tax IDs, audit history, and credentials             | Planned: authorize every endpoint per role, including document-level IDOR protection; do not put names, tax IDs, or other personal data in logs or error messages; use TLS for all traffic and encrypted backups. Auditor read access, CORS/CSRF details, and retention/backup policy remain open. API controls are not implemented. | Open    |
+| Denial of service      | API availability, repository, and document issuance                    | Planned: apply request/body limits, rate limits, timeouts, concurrency bounds, monitoring, and recovery procedures at deployment. Core schemas already bound several fields and arrays; API-level and operational controls are not implemented.                                                                                      | Planned |
+| Elevation of privilege | Cross-role actions and tenant data                                     | Planned: authorize every API operation from server-side identity, limit role changes to admins, and keep each installation single-tenant. The core checks transition roles but does not authenticate actors or enforce tenant isolation.                                                                                             | Planned |
+
+## Decisions
+
+| Decision                                                                                                                                                                   | Reason                                                                                                                                                         | Status                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| One self-hosted installation serves one business; multi-tenant use is out of scope.                                                                                        | Keeps tenant isolation outside the initial API design and avoids implying that the current data model enforces tenant boundaries.                              | decided (planned, not implemented) |
+| Use server-side sessions rather than JWTs so access can be revoked immediately. Session cookies will be `HttpOnly`, `Secure`, and `SameSite`; rotate the session on login. | Server-side revocation provides prompt access removal; cookie flags and session rotation reduce browser credential exposure and session fixation risk.         | decided (planned, not implemented) |
+| Hash passwords with Argon2id. Require TOTP MFA for `approver` and `admin`.                                                                                                 | Use a password hashing function designed to resist offline cracking and add a second factor to approval and administration actions.                            | decided (planned, not implemented) |
+| Create the first admin with an install-time CLI command; never offer public sign-up.                                                                                       | Restricts privileged account bootstrap to the installation operator rather than an unauthenticated network endpoint.                                           | decided (planned, not implemented) |
+| Allow only admins to change roles, and record each role change in the audit chain.                                                                                         | Limits privilege assignment and creates an auditable record of authorization changes. The current core has no role-management API or role-change audit action. | decided (planned, not implemented) |
+| Record login, failed-login, and role-change events in the audit chain.                                                                                                     | Adds a trail for authentication and authorization events alongside document lifecycle events. The current audit chain does not record these event types.       | decided (planned, not implemented) |
+| In a separate small PR, pin GitHub Actions to commit SHAs and enable Dependabot.                                                                                           | Reduces workflow supply-chain drift and automates dependency update visibility.                                                                                | decided (planned, not implemented) |
 
 ## Decisions needed
 
-- Which authentication provider and session or token model will the API use?
-- What read permissions should each role have, especially `auditor`?
-- Will the deployment remain single-tenant, and what isolation is required if
-  that assumption changes?
-- Which controls are required for CSRF, CORS, rate limits, request sizes, and
-  API error/log redaction?
-- Where will HMAC keys and independently published anchors be stored, backed
-  up, rotated, and recovered?
-- What retention, backup, and incident-recovery policy applies to personal and
-  tax document data?
+- Define read permissions for `auditor` and the other roles.
+- Specify CORS and CSRF protections for the eventual browser/API deployment.
+- Decide HMAC key storage and how audit and document hash anchors will be
+  published independently of the database.
+- Define retention, backup, and recovery policy for personal and tax document
+  data.
