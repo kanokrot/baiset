@@ -1,5 +1,5 @@
 {
-  "name": "@thai-docs/core",
+  "name": "@baiset/core",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

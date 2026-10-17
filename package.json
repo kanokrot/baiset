@@ -1,5 +1,5 @@
 {
-  "name": "thai-business-documents",
+  "name": "baiset",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "build": "pnpm --filter @thai-docs/core build",
+    "build": "pnpm --filter @baiset/core build",
     "typecheck": "pnpm build && pnpm -r typecheck",
     "test": "pnpm -r test",
     "audit": "pnpm audit --audit-level=high"

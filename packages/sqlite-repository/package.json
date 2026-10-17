@@ -1,5 +1,5 @@
 {
-  "name": "@thai-docs/sqlite-repository",
+  "name": "@baiset/sqlite-repository",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@thai-docs/core": "workspace:*",
+    "@baiset/core": "workspace:*",
     "better-sqlite3": "^12.2.0"
   },
   "devDependencies": {

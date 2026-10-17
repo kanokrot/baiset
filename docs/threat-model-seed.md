@@ -1,4 +1,4 @@
-# Threat model seed
+# BaiSet threat model seed
 
 First-pass STRIDE review. Unfinished items need more design or operational validation before release.
 
@@ -16,12 +16,12 @@ HMAC keys are supplied through service configuration and are not persisted by
 either adapter. Protect and rotate the key outside the database. Keep database
 credentials and connection strings in a secret manager or protected runtime
 configuration; never commit or log them. Run PostgreSQL migrations as a schema
-owner with `CREATEROLE`, then grant the restricted `thai_docs_app` role to a separately
+owner with `CREATEROLE`, then grant the restricted `baiset_app` role to a separately
 provisioned login used by the service. That role cannot update or delete audit
 rows. SQLite is a development persistence option, not a hardened deployment
 profile.
 
-The PostgreSQL migration grants `thai_docs_app` only the service's required
+The PostgreSQL migration grants `baiset_app` only the service's required
 access: `CONNECT` on the current database and `USAGE` on the `public` schema;
 `SELECT`, `INSERT`, and `UPDATE` on `documents` and `document_counters`;
 `SELECT` and `INSERT` on `audit_entries`; and `SELECT` and `UPDATE` on

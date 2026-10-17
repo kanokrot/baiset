@@ -42,7 +42,7 @@ importers:
 
   packages/postgres-repository:
     dependencies:
-      '@thai-docs/core':
+      '@baiset/core':
         specifier: workspace:*
         version: link:../core
       pg:
@@ -58,7 +58,7 @@ importers:
 
   packages/sqlite-repository:
     dependencies:
-      '@thai-docs/core':
+      '@baiset/core':
         specifier: workspace:*
         version: link:../core
       better-sqlite3:
