@@ -104,14 +104,14 @@ export class PostgresDocumentRepository implements DocumentRepository {
   private makeTransaction(client: PoolClient): DocumentTransaction {
     return {
       getDocument: (id) => this.readDocument(client, id),
-      saveDocument: async (document) => {
+      saveDocument: async (document): Promise<void> => {
         await client.query(
           `INSERT INTO documents(id, json) VALUES($1, $2::jsonb)
            ON CONFLICT(id) DO UPDATE SET json=EXCLUDED.json`,
           [document.id, JSON.stringify(document)],
         );
       },
-      nextDocumentNumber: async (type: DocumentType, series: string) => {
+      nextDocumentNumber: async (type: DocumentType, series: string): Promise<string> => {
         await client.query(
           `INSERT INTO document_counters(document_type, series, value) VALUES($1, $2, 0)
            ON CONFLICT(document_type, series) DO NOTHING`,
@@ -128,7 +128,7 @@ export class PostgresDocumentRepository implements DocumentRepository {
         );
         return `${series}-${String(next).padStart(6, '0')}`;
       },
-      appendAudit: async (entry: NewAuditEntry, hmacKey?: AuditHmacKey) => {
+      appendAudit: async (entry: NewAuditEntry, hmacKey?: AuditHmacKey): Promise<AuditEntry> => {
         // The singleton anchor lock serializes head reads, appends, and anchor updates.
         const result = await client.query<{
           entry_count: string | number;
@@ -148,13 +148,13 @@ export class PostgresDocumentRepository implements DocumentRepository {
         );
         return auditEntry;
       },
-      listAudit: async () => {
+      listAudit: async (): Promise<AuditEntry[]> => {
         const result = await client.query<JsonRow>(
           'SELECT json FROM audit_entries ORDER BY entry_index',
         );
         return result.rows.map((row) => parseJson(row.json) as AuditEntry);
       },
-      getAuditAnchor: async () => {
+      getAuditAnchor: async (): Promise<AuditAnchor> => {
         const result = await client.query<{
           entry_count: string | number;
           head_hash: string | null;

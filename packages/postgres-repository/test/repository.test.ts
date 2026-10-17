@@ -46,8 +46,8 @@ repositoryContract('PostgreSQL', async () => {
   await adminPool.query('UPDATE audit_anchor SET entry_count=0, head_hash=NULL WHERE singleton=1');
   return {
     repositories: [repositoryA, repositoryB],
-    async cleanup() {},
-    async assertAuditRowsProtected() {
+    async cleanup(): Promise<void> {},
+    async assertAuditRowsProtected(): Promise<void> {
       const owner = await adminPool.query<{ current_user: string; tableowner: string }>(
         `SELECT current_user, tableowner FROM pg_tables
          WHERE schemaname='public' AND tablename='audit_entries'`,
@@ -58,7 +58,7 @@ repositoryContract('PostgreSQL', async () => {
       );
       await expect(adminPool.query('DELETE FROM audit_entries')).rejects.toThrow(/append-only/);
     },
-    async assertSecretNotPersisted(secret) {
+    async assertSecretNotPersisted(secret): Promise<void> {
       const rows = await adminPool.query(
         'SELECT json::text FROM audit_entries UNION ALL SELECT json::text FROM documents',
       );

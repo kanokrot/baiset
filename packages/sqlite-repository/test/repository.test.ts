@@ -26,13 +26,13 @@ repositoryContract('SQLite', async () => {
   databases.push(dbA, dbB);
   return {
     repositories: [new SqliteDocumentRepository(dbA), new SqliteDocumentRepository(dbB)],
-    async cleanup() {},
-    async assertAuditRowsProtected() {
+    async cleanup(): Promise<void> {},
+    async assertAuditRowsProtected(): Promise<void> {
       for (const sql of ['UPDATE audit_entries SET json=json', 'DELETE FROM audit_entries']) {
         expect(() => dbA.exec(sql)).toThrow();
       }
     },
-    async assertSecretNotPersisted(secret) {
+    async assertSecretNotPersisted(secret): Promise<void> {
       const rows = dbA
         .prepare('SELECT json FROM audit_entries UNION ALL SELECT json FROM documents')
         .all();

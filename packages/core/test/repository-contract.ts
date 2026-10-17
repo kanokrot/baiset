@@ -224,7 +224,7 @@ export function repositoryContract(name: string, open: RepositoryContractFactory
           {
             clock: new FixedClock(),
             allowUnkeyedAudit: true,
-            warningLogger: () => undefined,
+            warningLogger: (): void => undefined,
           },
         );
         await service.createDraft(
