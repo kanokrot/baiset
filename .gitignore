@@ -1,0 +1,11 @@
+node_modules/
+.corepack-cache/
+.pnpm-store/
+.corepack-cache/**
+.pnpm-store/**
+dist/
+coverage/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
