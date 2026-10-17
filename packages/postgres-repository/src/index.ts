@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 import type { PoolClient, PoolConfig } from 'pg';
-import { createAuditEntry } from '@thai-docs/core';
+import { createAuditEntry } from '@baiset/core';
 import type {
   AuditAnchor,
   AuditEntry,
@@ -11,8 +11,8 @@ import type {
   BusinessDocument,
   DocumentType,
   NewAuditEntry,
-} from '@thai-docs/core';
-import type { DocumentRepository, DocumentTransaction } from '@thai-docs/core';
+} from '@baiset/core';
+import type { DocumentRepository, DocumentTransaction } from '@baiset/core';
 
 type JsonRow = { json: BusinessDocument | AuditEntry | string };
 

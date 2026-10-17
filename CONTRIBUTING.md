@@ -1,4 +1,4 @@
-# Contributing
+# Contributing to BaiSet
 
 Contributions should preserve the security-first scope and keep domain rules in `packages/core` free of framework and database dependencies.
 

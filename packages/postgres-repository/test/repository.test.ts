@@ -20,10 +20,10 @@ beforeAll(async () => {
   repositoryA = new PostgresDocumentRepository(config);
   repositoryB = new PostgresDocumentRepository(config);
   await repositoryA.migrate();
-  await adminPool.query("ALTER ROLE thai_docs_app LOGIN PASSWORD 'thai-docs-test-only-password'");
+  await adminPool.query("ALTER ROLE baiset_app LOGIN PASSWORD 'baiset-test-only-password'");
   const applicationUrl = new URL(container.getConnectionUri());
-  applicationUrl.username = 'thai_docs_app';
-  applicationUrl.password = 'thai-docs-test-only-password';
+  applicationUrl.username = 'baiset_app';
+  applicationUrl.password = 'baiset-test-only-password';
   applicationPool = new Pool({ connectionString: applicationUrl.toString() });
   restrictedRepository = new PostgresDocumentRepository({
     connectionString: applicationUrl.toString(),
@@ -67,17 +67,17 @@ repositoryContract('PostgreSQL', async () => {
   };
 });
 
-it('runs service operations as thai_docs_app and limits its table privileges', async () => {
+it('runs service operations as baiset_app and limits its table privileges', async () => {
   await adminPool.query('TRUNCATE documents, document_counters, audit_entries RESTART IDENTITY');
   await adminPool.query('UPDATE audit_anchor SET entry_count=0, head_hash=NULL WHERE singleton=1');
 
   const identity = await applicationPool.query<{ current_user: string }>('SELECT current_user');
-  expect(identity.rows[0]?.current_user).toBe('thai_docs_app');
+  expect(identity.rows[0]?.current_user).toBe('baiset_app');
   const connectionPrivileges = await adminPool.query<{
     can_connect: boolean;
     can_use_schema: boolean;
-  }>(`SELECT has_database_privilege('thai_docs_app', current_database(), 'CONNECT') AS can_connect,
-            has_schema_privilege('thai_docs_app', 'public', 'USAGE') AS can_use_schema`);
+  }>(`SELECT has_database_privilege('baiset_app', current_database(), 'CONNECT') AS can_connect,
+            has_schema_privilege('baiset_app', 'public', 'USAGE') AS can_use_schema`);
   expect(connectionPrivileges.rows[0]).toEqual({ can_connect: true, can_use_schema: true });
 
   const privilegeResult = await adminPool.query<{
@@ -87,10 +87,10 @@ it('runs service operations as thai_docs_app and limits its table privileges', a
     can_update: boolean;
     can_delete: boolean;
   }>(`SELECT table_name,
-       has_table_privilege('thai_docs_app', table_name, 'SELECT') AS can_select,
-       has_table_privilege('thai_docs_app', table_name, 'INSERT') AS can_insert,
-       has_table_privilege('thai_docs_app', table_name, 'UPDATE') AS can_update,
-       has_table_privilege('thai_docs_app', table_name, 'DELETE') AS can_delete
+       has_table_privilege('baiset_app', table_name, 'SELECT') AS can_select,
+       has_table_privilege('baiset_app', table_name, 'INSERT') AS can_insert,
+       has_table_privilege('baiset_app', table_name, 'UPDATE') AS can_update,
+       has_table_privilege('baiset_app', table_name, 'DELETE') AS can_delete
      FROM (VALUES ('documents'), ('document_counters'), ('audit_entries'), ('audit_anchor')) t(table_name)
      ORDER BY table_name`);
   expect(privilegeResult.rows).toEqual([

@@ -1,14 +1,18 @@
-# Thai Business Documents
+# BaiSet
 
-An open-source, self-hostable foundation for issuing Thai business documents: quotations, purchase orders, invoices, billing notes, tax invoices, and credit/debit notes.
+Tamper-evident Thai tax documents.
+
+BaiSet is an open-source foundation for managing Thai business documents, including quotations, purchase orders, invoices, billing notes, tax invoices, and credit/debit notes.
 
 ## Status
 
-Early development. This repository currently contains a TypeScript domain core and a SQLite development repository. It is not ready for production use.
+Early development. This repository contains a TypeScript domain core, a SQLite adapter for development, and a PostgreSQL adapter. It is not ready for production use.
 
 ## Scope
 
-The core models documents, money, transitions, numbering, permissions, tax invoice field validation, and a tamper-evident audit chain. `packages/sqlite-repository` provides development persistence behind the core repository interface. Draft edits are audited; issued content is protected by a canonical content hash.
+The core models documents, money, state transitions, numbering, permissions, and tax invoice field validation. It provides canonical content hashes for issued documents and a tamper-evident audit chain. The SQLite and PostgreSQL adapters implement the core repository interface.
+
+Thai tax rules and required tax invoice fields must be verified against current guidance from the [Thai Revenue Department](https://www.rd.go.th/). BaiSet does not provide legal or accounting advice, and its validation does not establish legal compliance.
 
 ## Non-goals for this stage
 
@@ -16,7 +20,7 @@ The core models documents, money, transitions, numbering, permissions, tax invoi
 - Legal or accounting advice
 - Integrations with payment providers or Thai government services
 
-Legal validation rules and operational security controls must be reviewed before release. See [the threat model seed](docs/threat-model-seed.md).
+Operational security controls and legal validation rules must be reviewed before release. See [the threat model seed](docs/threat-model-seed.md).
 
 ## Development
 

@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { createAuditEntry } from '@thai-docs/core';
+import { createAuditEntry } from '@baiset/core';
 import type {
   AuditAnchor,
   AuditEntry,
@@ -7,8 +7,8 @@ import type {
   DocumentType,
   NewAuditEntry,
   AuditHmacKey,
-} from '@thai-docs/core';
-import type { DocumentRepository, DocumentTransaction } from '@thai-docs/core';
+} from '@baiset/core';
+import type { DocumentRepository, DocumentTransaction } from '@baiset/core';
 
 type StoredDocument = { json: string };
 let transactionQueue: Promise<void> = Promise.resolve();
