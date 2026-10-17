@@ -2,6 +2,10 @@
 
 First-pass STRIDE review. Unfinished items need more design or operational validation before release.
 
+See the [API threat model](threat-model-api.md) for planned client, API, and
+deployment boundaries. API authentication and identity binding remain
+unimplemented.
+
 | Threat                 | Asset                             | Mitigation                                                                                                                                                                                                                                                                               | Status                                                                                                                                                                                                                      |
 | ---------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Spoofing               | Actor identity and roles          | Core transitions enforce RBAC. The future API must derive `Actor` from an authenticated session, never from request input.                                                                                                                                                               | Unfinished: authentication and identity binding                                                                                                                                                                             |

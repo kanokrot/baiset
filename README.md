@@ -59,6 +59,7 @@ can change. See
 
 The reasoning and known limits are written down in
 [docs/threat-model-seed.md](docs/threat-model-seed.md).
+Planned API-layer threats are described in [the API threat model](docs/threat-model-api.md).
 
 ## Repository layout
 
