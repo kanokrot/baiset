@@ -1,6 +1,6 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { Pool } from 'pg';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { DocumentService } from '../../core/src/index.js';
 import type { CreateDocumentInput } from '../../core/src/index.js';
 import { repositoryContract } from '../../core/test/repository-contract.js';
@@ -13,10 +13,18 @@ let repositoryA: PostgresDocumentRepository;
 let repositoryB: PostgresDocumentRepository;
 let restrictedRepository: PostgresDocumentRepository;
 
+function logTestPoolErrors(pool: Pool): void {
+  pool.on('error', (error: Error): void => {
+    const code = 'code' in error && typeof error.code === 'string' ? error.code : 'unknown';
+    console.error('PostgreSQL test idle pool client error', { code });
+  });
+}
+
 beforeAll(async () => {
   container = await new PostgreSqlContainer('postgres:16-alpine').start();
   const config = { connectionString: container.getConnectionUri() };
   adminPool = new Pool(config);
+  logTestPoolErrors(adminPool);
   repositoryA = new PostgresDocumentRepository(config);
   repositoryB = new PostgresDocumentRepository(config);
   await repositoryA.migrate();
@@ -25,13 +33,14 @@ beforeAll(async () => {
   applicationUrl.username = 'baiset_app';
   applicationUrl.password = 'baiset-test-only-password';
   applicationPool = new Pool({ connectionString: applicationUrl.toString() });
+  logTestPoolErrors(applicationPool);
   restrictedRepository = new PostgresDocumentRepository({
     connectionString: applicationUrl.toString(),
   });
 }, 120_000);
 
 afterAll(async () => {
-  await Promise.all([
+  const closeResults = await Promise.allSettled([
     repositoryA?.close(),
     repositoryB?.close(),
     restrictedRepository?.close(),
@@ -39,6 +48,15 @@ afterAll(async () => {
     adminPool?.end(),
   ]);
   await container?.stop();
+  const closeFailures = closeResults.filter(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  );
+  if (closeFailures.length > 0) {
+    throw new AggregateError(
+      closeFailures.map(({ reason }) => reason),
+      'Failed to close all PostgreSQL pools and repositories',
+    );
+  }
 }, 120_000);
 
 repositoryContract('PostgreSQL', async () => {
@@ -158,4 +176,36 @@ it('runs service operations as baiset_app and limits its table privileges', asyn
   await expect(applicationPool.query('DELETE FROM audit_entries')).rejects.toMatchObject({
     code: '42501',
   });
+});
+
+it('handles the server terminating an idle pooled connection', async () => {
+  const idlePoolError = vi.spyOn(console, 'error').mockImplementation((): void => undefined);
+  try {
+    const client = await repositoryA.pool.connect();
+    let backendPid: number | undefined;
+    try {
+      const result = await client.query<{ pid: number }>('SELECT pg_backend_pid() AS pid');
+      backendPid = result.rows[0]?.pid;
+    } finally {
+      client.release();
+    }
+    expect(backendPid).toBeDefined();
+
+    const terminated = await adminPool.query<{ terminated: boolean }>(
+      'SELECT pg_terminate_backend($1) AS terminated',
+      [backendPid],
+    );
+    expect(terminated.rows[0]?.terminated).toBe(true);
+    await vi.waitFor(() => {
+      expect(idlePoolError).toHaveBeenCalledWith(
+        'PostgreSQL idle pool client error',
+        expect.objectContaining({ code: expect.any(String) }),
+      );
+    });
+    await expect(repositoryA.pool.query('SELECT 1 AS ok')).resolves.toMatchObject({
+      rows: [{ ok: 1 }],
+    });
+  } finally {
+    idlePoolError.mockRestore();
+  }
 });

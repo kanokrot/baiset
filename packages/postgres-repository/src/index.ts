@@ -55,6 +55,11 @@ export class PostgresDocumentRepository implements DocumentRepository {
       config instanceof Pool
         ? config
         : new Pool(typeof config === 'string' ? { connectionString: config } : config);
+    // node-postgres emits this for idle clients; active query failures still reject their queries.
+    this.pool.on('error', (error: Error): void => {
+      const code = 'code' in error && typeof error.code === 'string' ? error.code : 'unknown';
+      console.error('PostgreSQL idle pool client error', { code });
+    });
   }
 
   async close(): Promise<void> {
